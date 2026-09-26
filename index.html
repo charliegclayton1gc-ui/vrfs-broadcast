@@ -39,8 +39,32 @@ linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px) 0 0/80px 80px}
 .logos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.upload{position:relative;border:1px dashed #42627f;padding:11px;text-align:center;background:#07101a;font-size:10px;color:#9bb0c5}.upload input{position:absolute;inset:0;opacity:0;cursor:pointer}.logoPreview{width:54px;height:54px;border:1px solid #47627a;margin:0 auto 6px;display:grid;place-items:center;background:#08111b}.logoPreview img{max-width:100%;max-height:100%;object-fit:contain}.scorecontrols{display:grid;grid-template-columns:1fr 80px 1fr;gap:8px;align-items:center;margin-top:9px}.score{font:900 34px 'Barlow Condensed';text-align:center}.btn{border:1px solid #54708a;background:#fff;color:#06111d;padding:10px;font-weight:900}.btn.dark{background:#112235;color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.clockread{background:#050c14;border:1px solid #31506e;text-align:center;padding:12px;font:900 31px 'Barlow Condensed';letter-spacing:2px}.clockgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.events{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.events .btn{font-size:10px;padding:12px 3px}.preview{height:155px;background:#06101a;border:1px solid #31506e;position:relative;overflow:hidden}.miniScore{position:absolute;left:8%;right:8%;top:11px;height:34px;background:#071a32;border:1px solid #fff;display:flex;align-items:center;justify-content:center;font:900 14px 'Barlow Condensed'}.miniClock{position:absolute;left:8%;right:8%;top:45px;height:13px;background:var(--red);font:900 8px 'Barlow Condensed';text-align:center}.miniPitch{position:absolute;left:8%;right:8%;top:69px;bottom:10px;border:1px solid #2b4a66}.miniPitch:after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px solid #2b4a66}.switchrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #1d3044;font-size:11px}.switch{width:39px;height:21px;border:1px solid #58728b;border-radius:20px;background:#182839;position:relative}.switch i{position:absolute;top:2px;left:3px;width:15px;height:15px;border-radius:50%;background:#a7b9c9;transition:.2s}.switch.on{background:var(--blue)}.switch.on i{left:20px;background:#fff}.timeline{max-height:160px;overflow:auto}.eventrow{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #16293b;font-size:10px}.eventrow span{color:#7690a8;font:600 13px 'Barlow Condensed'}.foot{text-align:center;color:#4f6982;font-size:8px;letter-spacing:1px;margin:14px}
 @media(max-width:1000px){.app{grid-template-columns:1fr}.control{position:absolute;right:0;top:0;width:430px;height:100vh;z-index:20;transform:translateX(100%);transition:.25s}.control:hover{transform:translateX(0)}}
 </style>
+
+<style>
+#captureBar{position:fixed;left:18px;bottom:18px;z-index:99999;display:flex;gap:8px;align-items:center;padding:10px 12px;background:rgba(10,15,25,.94);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;font:600 13px Arial,sans-serif;box-shadow:0 10px 35px rgba(0,0,0,.35)}
+#captureBar button{border:0;border-radius:7px;padding:9px 13px;background:#1769ff;color:#fff;font-weight:800;cursor:pointer}
+#captureBar button.secondary{background:#303846}
+#captureBar button.danger{background:#c92d3d}
+#captureStatus{opacity:.8;font-weight:600}
+#vrfsCaptureVideo{position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:0;display:none}
+#broadcastOverlayRoot{position:fixed;inset:0;z-index:10;pointer-events:none}
+.broadcast-fullscreen #captureBar{display:none!important}
+.broadcast-fullscreen body{background:transparent!important}
+.broadcast-fullscreen #vrfsCaptureVideo{object-fit:contain}
+#broadcastOverlayRoot .overlay-control{pointer-events:auto}
+</style>
+
 </head>
 <body>
+
+<video id="vrfsCaptureVideo" autoplay playsinline muted></video>
+<div id="captureBar">
+  <button id="captureBtn">Capture VRFS Window</button>
+  <button id="stopCaptureBtn" class="danger">Stop</button>
+  <button id="fullscreenBroadcastBtn" class="secondary">Fullscreen Broadcast</button>
+  <span id="captureStatus">No game captured</span>
+</div>
+
 <div class="app">
 <main class="output">
 <div class="stadium"></div><div class="circle"></div>
@@ -122,5 +146,53 @@ function logo(ev,side){let file=ev.target.files[0];if(!file)return;let reader=ne
 function restoreLogo(side){let x=localStorage.getItem('vrfs_'+side+'_logo');if(x){let box=$(side+'Logo');box.innerHTML='<img src="'+x+'">';let out=$(side==='home'?'homeBadge':'awayBadge');out.innerHTML='<img src="'+x+'">'}}
 $('homeName').oninput=render;$('awayName').oninput=render;restoreLogo('home');restoreLogo('away');render();
 </script>
+
+<script>
+(function(){
+  const video = document.getElementById('vrfsCaptureVideo');
+  const captureBtn = document.getElementById('captureBtn');
+  const stopBtn = document.getElementById('stopCaptureBtn');
+  const fullBtn = document.getElementById('fullscreenBroadcastBtn');
+  const status = document.getElementById('captureStatus');
+  let stream = null;
+
+  async function captureVRFS(){
+    try{
+      if(stream) stream.getTracks().forEach(t=>t.stop());
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video:{frameRate:{ideal:60,max:60}},
+        audio:false
+      });
+      video.srcObject = stream;
+      video.style.display = 'block';
+      status.textContent = 'VRFS captured — graphics are on top';
+      stream.getVideoTracks()[0].addEventListener('ended', stopCapture);
+    }catch(err){
+      status.textContent = 'Capture cancelled';
+    }
+  }
+
+  function stopCapture(){
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    stream = null;
+    video.srcObject = null;
+    video.style.display = 'none';
+    status.textContent = 'No game captured';
+    document.body.classList.remove('broadcast-fullscreen');
+  }
+
+  async function fullscreenBroadcast(){
+    document.body.classList.add('broadcast-fullscreen');
+    try{
+      if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    }catch(e){}
+  }
+
+  captureBtn.addEventListener('click', captureVRFS);
+  stopBtn.addEventListener('click', stopCapture);
+  fullBtn.addEventListener('click', fullscreenBroadcast);
+})();
+</script>
+
 </body>
 </html>
