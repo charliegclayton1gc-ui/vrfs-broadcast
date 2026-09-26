@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VRFS Sports Broadcast</title>
+<meta name="description" content="VRFS football broadcast graphics and live scoreboard control panel.">
+<meta name="theme-color" content="#071a32">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@500;600;700;800;900&display=swap');
+:root{--navy:#071a32;--blue:#0876e8;--blue2:#0b4f9e;--red:#e31d2b;--white:#fff;--ink:#07101b;--panel:#0b1625;--line:#24405d;--muted:#8ca0b7}
+*{box-sizing:border-box}body{margin:0;background:#03070c;color:#fff;font-family:Inter,Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:minmax(680px,1.5fr) minmax(430px,.75fr)}
+.output{position:relative;min-height:100vh;overflow:hidden;background:linear-gradient(135deg,#10243b,#06111e 60%,#02070d)}
+.stadium{position:absolute;inset:0;background:
+radial-gradient(ellipse at 50% 45%,rgba(30,110,180,.22),transparent 50%),
+linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/80px 80px,
+linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px) 0 0/80px 80px}
+.stadium:before{content:"";position:absolute;left:6%;right:6%;top:14%;bottom:8%;border:2px solid rgba(255,255,255,.12)}
+.stadium:after{content:"";position:absolute;left:50%;top:14%;bottom:8%;border-left:2px solid rgba(255,255,255,.12)}
+.circle{position:absolute;width:220px;height:220px;border:2px solid rgba(255,255,255,.12);border-radius:50%;left:calc(50% - 110px);top:42%}
+.players{position:absolute;inset:0}.p{position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.25)}.b{background:#0a0d11;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.p1{left:17%;top:37%}.p2{left:28%;top:62%}.p3{left:40%;top:27%}.p4{left:57%;top:65%}.p5{left:71%;top:35%}.p6{left:83%;top:52%}.p7{left:23%;top:25%}.p8{left:35%;top:49%}.p9{left:52%;top:37%}.p10{left:67%;top:70%}.p11{left:79%;top:23%}.p12{left:89%;top:45%}
+.live{position:absolute;top:22px;left:26px;display:flex;gap:9px;align-items:center;font-size:11px;font-weight:900;letter-spacing:2px}.live i{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 13px var(--red)}
+.watermark{position:absolute;right:25px;top:21px;font:900 20px 'Barlow Condensed';letter-spacing:1px}.watermark span{color:#5db2ff}
+.broadcast{position:absolute;top:54px;left:50%;transform:translateX(-50%);width:min(760px,88%);filter:drop-shadow(0 18px 30px rgba(0,0,0,.45))}
+.scorebar{height:78px;display:grid;grid-template-columns:1fr 130px 1fr;background:var(--navy);border:2px solid #fff;position:relative;overflow:hidden}
+.scorebar:before{content:"";position:absolute;inset:0;background:linear-gradient(105deg,rgba(8,118,232,.38),transparent 35%,transparent 65%,rgba(227,29,43,.3));pointer-events:none}
+.side{display:flex;align-items:center;gap:13px;padding:0 25px;position:relative;z-index:1;font:900 28px 'Barlow Condensed';letter-spacing:.5px}.away{justify-content:flex-end;text-align:right}
+.badge{width:42px;height:42px;border:2px solid #fff;background:#071a32;display:grid;place-items:center;overflow:hidden;flex:none}.badge img{width:100%;height:100%;object-fit:contain}.badge b{font:900 17px 'Barlow Condensed'}
+.mid{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;background:#fff;color:#071a32;clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);font:900 35px 'Barlow Condensed';gap:8px}.mid small{font:900 11px 'Barlow Condensed';color:#607187}
+.clock{height:28px;background:var(--red);color:#fff;text-align:center;font:900 15px 'Barlow Condensed';letter-spacing:1.5px;display:flex;align-items:center;justify-content:center}
+.competition{margin:8px auto 0;width:92%;background:rgba(3,10,19,.92);border-left:5px solid var(--blue);padding:7px 13px;display:flex;justify-content:space-between;font:800 12px 'Barlow Condensed';letter-spacing:1.2px}.competition span:last-child{color:#91a5ba}
+.goal{position:absolute;left:0;bottom:55px;width:500px;transform:translateX(-540px);transition:.55s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 20px 35px rgba(0,0,0,.5));z-index:5}.goal.show{transform:translateX(0)}
+.goalhead{height:34px;background:var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:900 15px 'Barlow Condensed';letter-spacing:2px}.goalbody{background:rgba(4,16,29,.97);border:1px solid #477093;border-top:0;padding:16px 22px 19px;position:relative}.goalbody:after{content:"";position:absolute;right:0;top:0;border-top:55px solid var(--blue);border-left:55px solid transparent;opacity:.9}.goalword{font:900 61px 'Barlow Condensed';line-height:.78}.goalmeta{font:900 17px 'Barlow Condensed';margin-top:12px}.goaldesc{font-size:11px;color:#9fb0c2;margin-top:4px}.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:10}.flash.on{animation:flash .65s}.pulse{animation:pulse .7s}@keyframes flash{0%{opacity:.38}100%{opacity:0}}@keyframes pulse{0%{transform:translateX(-50%)}35%{transform:translateX(-50%) scale(1.025)}100%{transform:translateX(-50%)}}
+
+.control{background:#07111d;border-left:1px solid #203850;padding:20px;overflow:auto}.head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:16px}.head h1{margin:0;font:900 29px 'Barlow Condensed';letter-spacing:1px}.head p{margin:2px 0 0;color:#7890a8;font-size:9px;letter-spacing:1.5px;text-transform:uppercase}.air{background:var(--red);padding:7px 9px;font-size:9px;font-weight:900;letter-spacing:1px}
+.section{border:1px solid var(--line);background:#0a1726;margin-top:14px}.title{padding:10px 12px;background:#0e2033;border-bottom:1px solid var(--line);font:900 12px 'Barlow Condensed';letter-spacing:1.5px}.pad{padding:12px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.label{font-size:9px;color:#7f96ad;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}.input{width:100%;background:#050c14;border:1px solid #31506e;color:#fff;padding:10px;outline:0}.input:focus{border-color:#3fa0ff}
+.logos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.upload{position:relative;border:1px dashed #42627f;padding:11px;text-align:center;background:#07101a;font-size:10px;color:#9bb0c5}.upload input{position:absolute;inset:0;opacity:0;cursor:pointer}.logoPreview{width:54px;height:54px;border:1px solid #47627a;margin:0 auto 6px;display:grid;place-items:center;background:#08111b}.logoPreview img{max-width:100%;max-height:100%;object-fit:contain}.scorecontrols{display:grid;grid-template-columns:1fr 80px 1fr;gap:8px;align-items:center;margin-top:9px}.score{font:900 34px 'Barlow Condensed';text-align:center}.btn{border:1px solid #54708a;background:#fff;color:#06111d;padding:10px;font-weight:900}.btn.dark{background:#112235;color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.clockread{background:#050c14;border:1px solid #31506e;text-align:center;padding:12px;font:900 31px 'Barlow Condensed';letter-spacing:2px}.clockgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.events{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.events .btn{font-size:10px;padding:12px 3px}.preview{height:155px;background:#06101a;border:1px solid #31506e;position:relative;overflow:hidden}.miniScore{position:absolute;left:8%;right:8%;top:11px;height:34px;background:#071a32;border:1px solid #fff;display:flex;align-items:center;justify-content:center;font:900 14px 'Barlow Condensed'}.miniClock{position:absolute;left:8%;right:8%;top:45px;height:13px;background:var(--red);font:900 8px 'Barlow Condensed';text-align:center}.miniPitch{position:absolute;left:8%;right:8%;top:69px;bottom:10px;border:1px solid #2b4a66}.miniPitch:after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px solid #2b4a66}.switchrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #1d3044;font-size:11px}.switch{width:39px;height:21px;border:1px solid #58728b;border-radius:20px;background:#182839;position:relative}.switch i{position:absolute;top:2px;left:3px;width:15px;height:15px;border-radius:50%;background:#a7b9c9;transition:.2s}.switch.on{background:var(--blue)}.switch.on i{left:20px;background:#fff}.timeline{max-height:160px;overflow:auto}.eventrow{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #16293b;font-size:10px}.eventrow span{color:#7690a8;font:600 13px 'Barlow Condensed'}.foot{text-align:center;color:#4f6982;font-size:8px;letter-spacing:1px;margin:14px}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.control{position:absolute;right:0;top:0;width:430px;height:100vh;z-index:20;transform:translateX(100%);transition:.25s}.control:hover{transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div class="app">
+<main class="output">
+<div class="stadium"></div><div class="circle"></div>
+<div class="players">
+<span class="p p1"></span><span class="p p2 b"></span><span class="p p3"></span><span class="p p4 b"></span><span class="p p5"></span><span class="p p6 b"></span>
+<span class="p p7 b"></span><span class="p p8"></span><span class="p p9 b"></span><span class="p p10"></span><span class="p p11 b"></span><span class="p p12"></span>
+</div>
+<div class="live"><i></i> LIVE / VRFS</div><div class="watermark">VRFS <span>SPORTS</span></div>
+<div class="broadcast" id="broadcast">
+<div class="scorebar" id="scorebar">
+<div class="side away"><span id="awayOut">UNITED</span><span class="badge" id="awayBadge"><b>U</b></span></div>
+<div class="mid"><b id="hsOut">2</b><small>—</small><b id="asOut">1</b></div>
+<div class="side"><span class="badge" id="homeBadge"><b>R</b></span><span id="homeOut">RAVENS</span></div>
+</div>
+<div class="clock" id="clockOut">67:42</div>
+<div class="competition"><span>VRFS LEAGUE</span><span>SECOND HALF</span></div>
+</div>
+<div class="goal" id="goal"><div class="goalhead"><span>GOAL</span><span id="goalMin">67'</span></div><div class="goalbody"><div class="goalword">GOAL!</div><div class="goalmeta" id="goalMeta">RAVENS · 10</div><div class="goaldesc" id="goalDesc">Great finish</div></div></div>
+<div class="flash" id="flash"></div>
+</main>
+
+<aside class="control">
+<div class="head"><div><h1>VRFS / BROADCAST</h1><p>Live graphics control room</p></div><div class="air">● ON AIR</div></div>
+
+<section class="section"><div class="title">TEAMS / SCORE</div><div class="pad">
+<div class="row"><div><div class="label">Home team</div><input class="input" id="homeName" value="RAVENS"></div><div><div class="label">Away team</div><input class="input" id="awayName" value="UNITED"></div></div>
+<div class="logos">
+<label class="upload"><div class="logoPreview" id="homeLogo"><b>R</b></div>UPLOAD HOME LOGO<input type="file" accept="image/*" onchange="logo(event,'home')"></label>
+<label class="upload"><div class="logoPreview" id="awayLogo"><b>U</b></div>UPLOAD AWAY LOGO<input type="file" accept="image/*" onchange="logo(event,'away')"></label>
+</div>
+<div class="scorecontrols"><button class="btn" onclick="change('home',-1)">HOME −</button><div class="score"><span id="hs">2</span> — <span id="as">1</span></div><button class="btn" onclick="change('away',1)">AWAY +</button></div>
+</div></section>
+
+<section class="section"><div class="title">MATCH CLOCK</div><div class="pad"><div class="clockread" id="timer">67:42</div><div class="clockgrid"><button class="btn blue" onclick="start()">START</button><button class="btn dark" onclick="pause()">PAUSE</button></div><div style="height:7px"></div><button class="btn dark" style="width:100%" onclick="resetClock()">RESET CLOCK</button></div></section>
+
+<section class="section"><div class="title">LIVE GRAPHICS</div><div class="pad">
+<div class="events">
+<button class="btn red" onclick="goal('home')">HOME GOAL</button><button class="btn red" onclick="goal('away')">AWAY GOAL</button><button class="btn blue" onclick="highlight()">HIGHLIGHT</button>
+<button class="btn dark" onclick="log('Yellow card')">YELLOW</button><button class="btn dark" onclick="log('Red card')">RED</button><button class="btn dark" onclick="log('Substitution')">SUB</button>
+</div><div style="height:9px"></div>
+<div class="row"><div><div class="label">Scorer</div><input class="input" id="scorer" value="10 · RAVENS"></div><div><div class="label">Goal message</div><input class="input" id="goalMessage" value="Great finish"></div></div>
+<div style="height:8px"></div><button class="btn red" style="width:100%" onclick="goal('home')">TRIGGER GOAL ANIMATION</button>
+</div></section>
+
+<section class="section"><div class="title">OUTPUT PREVIEW</div><div class="pad"><div class="preview"><div class="miniScore" id="miniScore">RAVENS 2 — 1 UNITED</div><div class="miniClock" id="miniClock">67:42</div><div class="miniPitch"></div></div></div></section>
+
+<section class="section"><div class="title">VISIBILITY</div><div class="pad">
+<div class="switchrow">Scoreboard <span class="switch on" onclick="toggle(this,'broadcast')"><i></i></span></div>
+<div class="switchrow">Goal animation <span class="switch on" onclick="toggle(this,'goal')"><i></i></span></div>
+<div class="switchrow">Match clock <span class="switch on" onclick="toggle(this,'clockOut')"><i></i></span></div>
+</div></section>
+
+<section class="section"><div class="title">EVENT LOG</div><div class="timeline" id="timeline"><div class="eventrow"><b>Match started</b><span>00:00</span></div><div class="eventrow"><b>Goal — RAVENS</b><span>52:10</span></div></div></section>
+<div class="foot">VRFS SPORTS BROADCAST PACK · CUSTOM TEAM LOGOS SUPPORTED</div>
+</aside>
+</div>
+<script>
+let H=2,A=1,t=67*60+42,running=false,iv=null;
+const $=id=>document.getElementById(id);
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function render(){
+ let hn=$('homeName').value||'HOME',an=$('awayName').value||'AWAY';
+ $('hs').textContent=H;$('as').textContent=A;$('hsOut').textContent=H;$('asOut').textContent=A;$('homeOut').textContent=hn;$('awayOut').textContent=an;
+ $('homeBadge').querySelector('b') && ($('homeBadge').querySelector('b').textContent=hn[0]);$('awayBadge').querySelector('b') && ($('awayBadge').querySelector('b').textContent=an[0]);
+ $('timer').textContent=fmt(t);$('clockOut').textContent=fmt(t);$('miniClock').textContent=fmt(t);$('miniScore').textContent=hn+' '+H+' — '+A+' '+an;
+}
+function change(s,n){if(s==='home')H=Math.max(0,H+n);else A=Math.max(0,A+n);render();log('Score adjusted')}
+function start(){if(!running){running=true;iv=setInterval(()=>{t++;render()},1000);log('Clock started')}}
+function pause(){running=false;clearInterval(iv);log('Clock paused')}
+function resetClock(){pause();t=0;render();log('Clock reset')}
+function log(x){let e=document.createElement('div');e.className='eventrow';e.innerHTML='<b>'+x+'</b><span>'+fmt(t)+'</span>';$('timeline').prepend(e)}
+function flash(){let f=$('flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on')}
+function goal(s){if(s==='home')H++;else A++;render();let team=s==='home'?$('homeName').value:$('awayName').value;
+$('goalMin').textContent=Math.floor(t/60)+"'";$('goalMeta').textContent=team+' · '+$('scorer').value;$('goalDesc').textContent=$('goalMessage').value;
+$('goal').classList.add('show');$('scorebar').classList.add('pulse');flash();log('GOAL — '+team);setTimeout(()=>$('scorebar').classList.remove('pulse'),700);setTimeout(()=>$('goal').classList.remove('show'),5200)}
+function highlight(){flash();$('scorebar').classList.add('pulse');log('Highlight replay');setTimeout(()=>$('scorebar').classList.remove('pulse'),700)}
+function toggle(el,id){el.classList.toggle('on');$(id).style.display=el.classList.contains('on')?'':'none'}
+function logo(ev,side){let file=ev.target.files[0];if(!file)return;let reader=new FileReader();reader.onload=e=>{let box=$(side+'Logo');box.innerHTML='<img src="'+e.target.result+'">';let out=$(side==='home'?'homeBadge':'awayBadge');out.innerHTML='<img src="'+e.target.result+'">';try{localStorage.setItem('vrfs_'+side+'_logo',e.target.result)}catch(_){} };reader.readAsDataURL(file)}
+function restoreLogo(side){let x=localStorage.getItem('vrfs_'+side+'_logo');if(x){let box=$(side+'Logo');box.innerHTML='<img src="'+x+'">';let out=$(side==='home'?'homeBadge':'awayBadge');out.innerHTML='<img src="'+x+'">'}}
+$('homeName').oninput=render;$('awayName').oninput=render;restoreLogo('home');restoreLogo('away');render();
+</script>
+</body>
+</html>
